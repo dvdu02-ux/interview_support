@@ -30,6 +30,7 @@ class QuestionDetector {
         this.aiEnabled = true;
         this.fallbackCount = 0;
         this.totalCount = 0;
+        this.consecutiveAIFailures = 0;
     }
 
     /**
@@ -43,14 +44,25 @@ class QuestionDetector {
 
         this.totalCount++;
 
-        // Try AI detection first
-        if (this.aiEnabled) {
+        // Try AI detection first (with timeout so a slow/dead provider
+        // never stalls the pipeline — fall back to rules quickly)
+        if (this.aiEnabled && this.consecutiveAIFailures < 3) {
             try {
-                const result = await this._detectWithAI(text);
+                const result = await Promise.race([
+                    this._detectWithAI(text),
+                    new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('AI detection timeout')), 5000)
+                    ),
+                ]);
+                this.consecutiveAIFailures = 0;
                 return result;
             } catch (err) {
                 console.warn('[QuestionDetector] AI detection failed, using rule-based fallback:', err);
                 this.fallbackCount++;
+                this.consecutiveAIFailures++;
+                if (this.consecutiveAIFailures >= 3) {
+                    console.warn('[QuestionDetector] 3 consecutive AI failures — switching to rule-based only. Check AI provider config.');
+                }
                 // Continue to rule-based fallback
             }
         }
@@ -123,6 +135,7 @@ class QuestionDetector {
     resetStats() {
         this.fallbackCount = 0;
         this.totalCount = 0;
+        this.consecutiveAIFailures = 0;
     }
 
     /**

@@ -3,6 +3,7 @@ use futures_util::StreamExt;
 use reqwest::Client;
 use serde_json;
 use std::error::Error;
+use std::time::Duration;
 use tauri::ipc::Channel;
 
 /// OpenAI-compatible API client
@@ -18,7 +19,14 @@ impl OpenAICompatibleClient {
         Self {
             base_url,
             api_key,
-            client: Client::new(),
+            client: Client::builder()
+                .connect_timeout(Duration::from_secs(10))
+                // Total request timeout — covers streaming too, so keep it
+                // generous enough for a full streamed answer but finite so a
+                // dead provider can never hang the app forever.
+                .timeout(Duration::from_secs(120))
+                .build()
+                .unwrap_or_default(),
         }
     }
 
