@@ -105,17 +105,22 @@ class InterviewController {
         this._setStatus('detecting');
         try {
             const result = await questionDetector.detect(text);
+            this._processing = false; // release lock before generation
             if (!result.isQuestion) {
                 this._setStatus('listening');
                 return;
             }
-            await this._answerQuestion(text);
+            // _answerQuestion runs independently — new utterances can be detected
+            this._answerQuestion(text).catch((err) => {
+                console.error('[InterviewController] Answer error:', err);
+                this._setStatus('error');
+                setTimeout(() => this.started && this._setStatus('listening'), 3000);
+            });
         } catch (err) {
+            this._processing = false;
             console.error('[InterviewController] Utterance error:', err);
             this._setStatus('error');
             setTimeout(() => this.started && this._setStatus('listening'), 3000);
-        } finally {
-            this._processing = false;
         }
     }
 
