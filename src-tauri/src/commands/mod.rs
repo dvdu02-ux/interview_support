@@ -1,5 +1,6 @@
 pub mod ai_service;
 pub mod audio;
+pub mod interview_profile;
 pub mod edge_tts;
 pub mod google_free_tts;
 pub mod http_client;

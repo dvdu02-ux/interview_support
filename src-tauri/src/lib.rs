@@ -103,6 +103,8 @@ pub fn run() {
             commands::ai_service::ai_generate_answer,
             commands::ai_service::ai_detect_question,
             commands::settings::get_settings,
+            commands::interview_profile::load_interview_profile,
+            commands::interview_profile::save_interview_profile,
             commands::settings::save_settings,
             commands::audio::start_capture,
             commands::audio::stop_capture,
