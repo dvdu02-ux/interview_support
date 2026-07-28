@@ -1,3 +1,4 @@
+mod ai;
 mod audio;
 mod commands;
 mod settings;
@@ -99,6 +100,8 @@ pub fn run() {
         .manage(OpenAiState::default())
         .manage(QwenState::default())
         .invoke_handler(tauri::generate_handler![
+            commands::ai_service::ai_generate_answer,
+            commands::ai_service::ai_detect_question,
             commands::settings::get_settings,
             commands::settings::save_settings,
             commands::audio::start_capture,

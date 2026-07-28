@@ -1,3 +1,4 @@
+pub mod ai_service;
 pub mod audio;
 pub mod edge_tts;
 pub mod google_free_tts;
