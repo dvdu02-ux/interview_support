@@ -33,6 +33,7 @@
           </button>
           <button class="activity-tab" data-activity="read" title="Đọc văn bản (TTS)" type="button">📖 Đọc</button>
           <button class="activity-tab" data-activity="library" title="Sessions đã lưu" type="button">📚 Thư viện</button>
+          <button class="activity-tab" data-activity="interview" title="Chế độ phỏng vấn" type="button">💼 Interview</button>
         </div>
 
         <div class="toolbar-spacer" data-tauri-drag-region></div>
@@ -276,6 +277,94 @@
           </button>
         </div>
         <div id="session-viewer-content" class="session-content-scroll"></div>
+      </div>
+    </div>
+
+
+    <!-- Interview activity panel — question detection + AI answer generation -->
+    <div id="interview-panel" class="activity-panel" data-activity="interview">
+      <!-- Interview toolbar -->
+      <div class="interview-toolbar">
+        <button id="btn-interview-start" class="read-btn read-btn-primary" type="button">▶ Bắt đầu</button>
+        <button id="btn-interview-stop" class="read-btn" type="button" style="display:none">⏹ Dừng</button>
+        <span id="interview-status" class="interview-status">Sẵn sàng</span>
+        <div class="toolbar-spacer"></div>
+        <button id="btn-interview-profile" class="icon-btn" title="Hồ sơ phỏng vấn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </button>
+        <button id="btn-interview-history" class="icon-btn" title="Lịch sử phỏng vấn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Conversation area: detected questions + streamed answers -->
+      <div id="interview-conversation" class="interview-conversation">
+        <div id="interview-empty-state" class="interview-empty-state">
+          <p>💼 Chế độ phỏng vấn</p>
+          <p class="interview-hint">Nhấn "Bắt đầu" để nghe câu hỏi từ người phỏng vấn.<br/>
+          Khi phát hiện câu hỏi, AI sẽ tự động soạn câu trả lời gợi ý.</p>
+        </div>
+      </div>
+
+      <!-- Profile editor (hidden by default) -->
+      <div id="interview-profile-editor" class="interview-profile-editor" style="display:none">
+        <div class="interview-profile-header">
+          <button id="btn-interview-profile-back" class="icon-btn" title="Quay lại" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+          </button>
+          <h3>Hồ sơ phỏng vấn</h3>
+          <button id="btn-interview-profile-save" class="read-btn read-btn-primary" type="button">Lưu</button>
+        </div>
+        <div class="interview-profile-body">
+          <h4>🤖 AI Provider (OpenAI-compatible)</h4>
+          <label>Base URL <input type="text" id="ip-base-url" placeholder="https://api.openai.com/v1" /></label>
+          <label>API Key <input type="password" id="ip-api-key" placeholder="sk-..." /></label>
+          <label>Model <input type="text" id="ip-model" placeholder="gpt-4o-mini" /></label>
+
+          <h4>👤 Thông tin cá nhân</h4>
+          <label>Họ tên <input type="text" id="ip-name" /></label>
+          <label>Vị trí hiện tại <input type="text" id="ip-role" /></label>
+          <label>Số năm kinh nghiệm <input type="number" id="ip-years" min="0" max="50" /></label>
+          <label>Học vấn <input type="text" id="ip-education" /></label>
+
+          <h4>📄 Tóm tắt sự nghiệp</h4>
+          <textarea id="ip-summary" rows="3" placeholder="Tóm tắt ngắn về sự nghiệp của bạn..."></textarea>
+          <label>Kỹ năng (phân cách bằng dấu phẩy) <input type="text" id="ip-skills" placeholder="React, Node.js, Python..." /></label>
+          <textarea id="ip-projects" rows="2" placeholder="Các dự án chính (mỗi dòng một dự án)..."></textarea>
+
+          <h4>⚙️ Cài đặt câu trả lời</h4>
+          <label>Giọng điệu
+            <select id="ip-tone">
+              <option value="professional">Chuyên nghiệp</option>
+              <option value="casual">Thân thiện</option>
+              <option value="technical">Kỹ thuật</option>
+            </select>
+          </label>
+          <label>Độ dài tối đa (từ) <input type="number" id="ip-max-length" min="50" max="500" value="150" /></label>
+        </div>
+      </div>
+
+      <!-- History viewer (hidden by default) -->
+      <div id="interview-history-viewer" class="interview-history-viewer" style="display:none">
+        <div class="interview-profile-header">
+          <button id="btn-interview-history-back" class="icon-btn" title="Quay lại" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+          </button>
+          <h3>Lịch sử phỏng vấn</h3>
+        </div>
+        <div id="interview-history-list" class="interview-history-list"></div>
       </div>
     </div>
 
