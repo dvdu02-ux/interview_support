@@ -17,6 +17,8 @@ import { audioPlayer, readAudioPlayer } from './audio-player.js';
 import { Reader } from './reader.js';
 import { updater } from './updater.js';
 import { sessionStore } from './session-store.js';
+import { eventBus } from './event-bus.js';
+import { interviewController } from './interview-controller.js';
 import { QWEN_LANGS } from './qwen-langs.js';
 import {
     initShell, setActivity, getActivity, setLiveBadge, bindMenu, initWindowModes,
@@ -74,6 +76,9 @@ class App {
 
         // Check platform — hide Local MLX on non-Apple-Silicon
         await this._checkPlatformSupport();
+
+        // Init Interview Mode controller (profile + history + UI bindings)
+        await interviewController.init();
 
         // Apply saved settings to UI
         this._applySettings(settingsManager.get());
@@ -585,6 +590,7 @@ class App {
             this.transcriptUI.addTranslation(text);
             const src = this._sonioxOriginalQueue.shift() || '';
             sessionStore.addSegment(src, text);
+            eventBus.emit('utterance-completed', { source: src, translated: text });
             this._speakIfEnabled(text);
         };
 
@@ -2325,6 +2331,7 @@ class App {
             // Atomic write to session store — bypass UI's loose FIFO since
             // OpenAI gives us both texts in one event.
             sessionStore.addSegment(sourceText || '', translatedText || '');
+            eventBus.emit('utterance-completed', { source: sourceText || '', translated: translatedText || '' });
             this.transcriptUI.clearSourceProvisional?.();
             this.transcriptUI.clearProvisional();
         };
@@ -2401,6 +2408,7 @@ class App {
         this.qwenClient.onSegment = (sourceText, translatedText) => {
             this.transcriptUI.addTranslation(translatedText);
             sessionStore.addSegment('', translatedText || '');
+            eventBus.emit('utterance-completed', { source: '', translated: translatedText || '' });
             this.transcriptUI.clearProvisional();
         };
         this.qwenClient.onError = (code, msg) => {
@@ -2637,6 +2645,7 @@ class App {
                 // Persist atomically — Local pipeline gives both texts in
                 // one event so we don't need FIFO pairing.
                 sessionStore.addSegment(data.original || '', data.translated || '');
+                eventBus.emit('utterance-completed', { source: data.original || '', translated: data.translated || '' });
                 break;
             case 'status':
                 const msg = data.message || 'Loading...';
