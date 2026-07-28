@@ -60,6 +60,9 @@ class InterviewController {
         document.getElementById('btn-interview-profile-save')?.addEventListener('click', () => {
             this._saveProfileFromForm();
         });
+        document.getElementById('btn-interview-profile-test')?.addEventListener('click', () => {
+            this._testAIConnection();
+        });
         this.els.btnHistory?.addEventListener('click', () => this._openHistoryViewer());
         document.getElementById('btn-interview-history-back')?.addEventListener('click', () => {
             this.els.historyViewer.style.display = 'none';
@@ -95,9 +98,10 @@ class InterviewController {
     }
 
     async _onUtterance(data) {
-        if (!this.started) return;
+        if (!this.started || this._processing) return;
         const text = (data.source || data.translated || '').trim();
         if (!text) return;
+        this._processing = true;
         this._setStatus('detecting');
         try {
             const result = await questionDetector.detect(text);
@@ -110,6 +114,8 @@ class InterviewController {
             console.error('[InterviewController] Utterance error:', err);
             this._setStatus('error');
             setTimeout(() => this.started && this._setStatus('listening'), 3000);
+        } finally {
+            this._processing = false;
         }
     }
 
@@ -211,6 +217,37 @@ class InterviewController {
     _openHistoryViewer() {
         this._renderHistoryList();
         this.els.historyViewer.style.display = '';
+    }
+
+    async _testAIConnection() {
+        const g = (id) => document.getElementById(id);
+        const resultEl = g('ip-test-result');
+        const btn = g('btn-interview-profile-test');
+        const base_url = g('ip-base-url').value.trim();
+        const api_key = g('ip-api-key').value.trim();
+        const model = g('ip-model').value.trim();
+        if (!base_url || !api_key || !model) {
+            resultEl.textContent = '⚠ Điền đủ Base URL, API Key và Model';
+            resultEl.style.color = 'var(--color-warning, orange)';
+            return;
+        }
+        btn.disabled = true;
+        resultEl.textContent = '⏳ Đang kiểm tra…';
+        resultEl.style.color = '';
+        try {
+            const { invoke } = window.__TAURI__.core;
+            const ok = await Promise.race([
+                invoke('ai_detect_question', { config: { base_url, api_key, model }, text: 'Hello?' }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout 10s')), 10000)),
+            ]);
+            resultEl.textContent = '✅ Kết nối thành công';
+            resultEl.style.color = 'var(--color-success, #4caf50)';
+        } catch (err) {
+            resultEl.textContent = '❌ ' + (err.message || err);
+            resultEl.style.color = 'var(--color-error, #f44336)';
+        } finally {
+            btn.disabled = false;
+        }
     }
 
     _renderHistoryList() {
