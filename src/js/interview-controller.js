@@ -76,6 +76,9 @@ class InterviewController {
         this.els.btnStart.style.display = 'none';
         this.els.btnStop.style.display = '';
         this._setStatus('listening');
+        // Interview mode has no audio capture of its own — it listens to the
+        // translation pipeline. Ask the app to start the engine if idle.
+        eventBus.emit('interview-start-requested');
     }
 
     stop() {

@@ -80,6 +80,21 @@ class App {
         // Init Interview Mode controller (profile + history + UI bindings)
         await interviewController.init();
 
+        // Interview mode listens to the translation pipeline; if the engine is
+        // idle when Interview starts, kick it off so audio actually flows.
+        eventBus.on('interview-start-requested', async () => {
+            if (this.isRunning || this.isStarting) return;
+            try {
+                this.isStarting = true;
+                await this.start();
+            } catch (err) {
+                console.error('[App] Interview auto-start error:', err);
+                this._showToast(`Error: ${err}`, 'error');
+            } finally {
+                this.isStarting = false;
+            }
+        });
+
         // Apply saved settings to UI
         this._applySettings(settingsManager.get());
 
